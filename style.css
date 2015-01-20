@@ -1,0 +1,21 @@
+body {
+  text-align: center;
+  padding: 20px;
+}
+.artists {
+  padding-top: 20px;
+}
+.artists img {
+  max-width: 100%;
+  max-height: 200px;
+}
+.login-button img {
+  width: 400px;
+  height: 72px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -36px;
+  margin-left: -200px;
+  cursor: pointer;
+}

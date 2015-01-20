@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html ng-app="app">
+  <head>
+    <title>Discografy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link href="http://fonts.googleapis.com/css?family=Oxygen:300" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="//ajax.googleapis.com/ajax/libs/angular_material/0.6.1/angular-material.min.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular-route.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular-animate.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular-aria.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angular_material/0.6.1/angular-material.min.js"></script>
+  </head>
+  <body ng-controller="appCtrl">
+    <div ng-hide="spotify.noLogin || spotify.user" class="login-button"><img src="img/login.png" ng-click="spotify.login()" class="loginbutton"></div>
+    <div id="app" ng-show="spotify.noLogin || spotify.user" class="container">
+      <div class="row welcome">
+        <div class="col-md-12">
+          <p>Hi {{ spotify.me.display_name }}</p>
+        </div>
+      </div>
+      <div class="row form">
+        <div class="col-md-12">
+          <form ng-submit="spotify.search()" class="form">
+            <div class="input-group">
+              <input type="text" ng-model="spotify.query" class="form-control"><span class="input-group-btn">
+                <button type="button" ng-click="spotify.search()" class="btn btn-primary">Search!</button></span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div ng-show="spotify.artists" class="row artists">
+        <md-content ng-init="ux.options = false">
+          <div ng-repeat="artist in spotify.artists" class="col-sm-6 col-md-4">
+            <md-card><img ng-src="{{artist.images[0].url}}"><img src="http://placehold.it/300&amp;text=:-(" ng-hide="artist.images[0].url">
+              <md-card-content>
+                <h3><a ng-href="{{ artist.external_urls.spotify }}" alt="{{ artist.name }}" title="{{ artist.name }}">{{ artist.name | limitTo: 30}}{{ artist.name.length > 20 ? '...' : '' }}</a></h3>
+                <form>
+                  <div ng-show="ux.options" class="form-group">
+                    <label>Albums
+                      <input type="checkbox" ng-model="spotify.artists[$index].options.albums" ng-init="spotify.artists[$index].options.albums = true">
+                    </label>
+                    <label>Singles
+                      <input type="checkbox" ng-model="spotify.artists[$index].options.singles" ng-init="spotify.artists[$index].options.singles = true">
+                    </label>
+                    <label>Compilations
+                      <input type="checkbox" ng-model="spotify.artists[$index].options.compilations" ng-init="spotify.artists[$index].options.compilations = true">
+                    </label>
+                    <!--												
+                    label Appears on
+                    	input(type="checkbox" ng-model="spotify.artists[$index].options.appearson" ng-init="spotify.artists[$index].options.appearson = false")
+                    -->
+                  </div>
+                  <button ng-click="spotify.savePlaylist($index)" class="btn btn-primary">Save to Playlist</button>
+                  <button ng-click="ux.options = !ux.options" class="btn btn-link">Show options</button>
+                </form>
+              </md-card-content>
+            </md-card>
+          </div>
+        </md-content>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
