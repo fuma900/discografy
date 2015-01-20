@@ -1,0 +1,4 @@
+.codekit-cache/
+dist/
+
+.DS_Store
