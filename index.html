@@ -22,6 +22,12 @@
           <p>Search an artist to add all the songs available to a playlist.</p>
         </div>
       </div>
+      <div ng-show="alert.visible" class="row alerts">
+        <div ng-init="ux.alert = {}" class="col-md-12">
+          <div role="alert" ng-show="alert.type == 'error'" class="alert alert-danger">{{ alert.message }}</div>
+          <div role="alert" ng-show="alert.type == 'success'" class="alert alert-success">{{ alert.message }}</div>
+        </div>
+      </div>
       <div class="row form">
         <div class="col-md-12">
           <form ng-submit="spotify.search()" class="form">

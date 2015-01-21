@@ -145,9 +145,48 @@ spotifyModule.service('Spotify', ['$rootScope', '$log', '$q', '$http', 'Helper',
 
 var helperModule = angular.module('helperModule', []);
 
-helperModule.service('Helper', ['$q', '$log', function($q, $log) {
+helperModule.service('Helper', ['$q', '$log', '$rootScope', function($q, $log, $rootScope) {
 
 	this.language = navigator.language || navigator.userLanguage;
+
+	this.ALERTS = {
+		GENERIC_ERROR: 0,
+		ACCESS_TOKEN_NOT_VALID: 1,
+		PLAYLIST_SAVED : 2,
+	};
+
+	this.setAlert = function(type) {
+		var code = this.ALERTS[type];
+		var alert = {};
+		switch(code){
+			case 0:
+				alert = {
+					'type': 'error',
+					'message': 'An error occurred. Check your connection and try again.'
+				};
+				break;
+			case 1:
+				alert = {
+					'type': 'error',
+					'message': 'Not a valid session. Redirecting to login...'
+				};
+				break;
+			case 2:
+				alert = {
+					'type': 'success',
+					'message': 'Playlist saved correctly!'
+				};
+				break;
+		}
+		$rootScope.alert = alert;
+		$rootScope.alert.visible = true;
+		console.info(alert.message);
+		setTimeout(function() {
+			$rootScope.$apply(function() {
+				$rootScope.alert.visible = false;
+			});
+		},3000)
+	};
 
 	// Parse the response from url after spotify login (which return an hashbang response)
 	this.parseHashbangResponse = function(path) {
@@ -195,7 +234,54 @@ helperModule.service('Helper', ['$q', '$log', function($q, $log) {
 	};
 }]);
 
-var app = angular.module('app', ['spotifyModule', 'helperModule']);
+var app = angular.module('app', ['spotifyModule', 'helperModule', 'ngRoute', 'ngAnimate']);
+
+app.factory('myHttpInterceptor', ['$q', 'Helper', function($q, Helper, $rootScope) {
+  return {
+    // optional method
+    'request': function(config) {
+    	// do something on success
+    	return config;
+    },
+
+    // optional method
+   'requestError': function(rejection) {
+   		console.log('requestError');
+		return $q.reject(rejection);
+    },
+
+    // optional method
+    'response': function(response) {
+	    // do something on success
+	    return response;
+    },
+
+    // optional method
+   'responseError': function(rejection) {
+      // do something on error
+      console.log('responseError');
+      if(rejection.status === 401) {
+      		// $rootScope.alert = {
+      		// 	type: 'error',
+      		// 	message: 'Not a valid session. Redirecting to login...'
+      		// }
+      		Helper.setAlert('ACCESS_TOKEN_NOT_VALID');
+			console.log('Authentication no more valid. Redirecting...');
+			setTimeout(function() {
+				window.location = './';
+			}, 2000);
+			return $q.reject(rejection);
+		} else {
+			return $q.reject(rejection);
+		}
+      return $q.reject(rejection);
+    }
+  };
+}]);
+
+app.config(['$httpProvider', function($httpProvider) {
+	$httpProvider.interceptors.push('myHttpInterceptor');
+}]);
 
 app.controller('appCtrl', ['Spotify', 'Helper', '$q', '$scope', '$rootScope', function(Spotify, Helper, $q, $scope, $rootScope){
 		
@@ -203,7 +289,7 @@ app.controller('appCtrl', ['Spotify', 'Helper', '$q', '$scope', '$rootScope', fu
 		$rootScope.spotify.user = false;
 		$rootScope.spotify.noLogin = false;
 
-		// Controlla se esiste un utente e che l'accessToken è ancora valida. Se non è impostato un utente restituisce Falso.
+		// Ottiene l'access token dall'hashbang
 		Spotify.getAccessToken();
 
 		// Login
@@ -211,10 +297,12 @@ app.controller('appCtrl', ['Spotify', 'Helper', '$q', '$scope', '$rootScope', fu
 			Spotify.login();
 		};
 
-		// get user details
-		Spotify.getUser().then(function(user) {
-			$scope.spotify.me = user;
-		});	
+		if ($scope.spotify.user){
+			// get user details
+			Spotify.getUser().then(function(user) {
+				$scope.spotify.me = user;
+			});
+		}
 
 		$scope.spotify.search = function() {
 			// search spotify
@@ -254,12 +342,11 @@ app.controller('appCtrl', ['Spotify', 'Helper', '$q', '$scope', '$rootScope', fu
 			var createPlaylist = Spotify.createPlaylist($scope.spotify.me, name);
 
 			$q.all([getArtistSongs, createPlaylist]).then(function(res) {
-				console.info('playlist created');
 				var uris = res[0];
 				var playlist = res[1];
 				return Spotify.addTracksToPlaylist(playlist, uris);
 			}).then(function(res) {
-				console.info('songs added');
+				Helper.setAlert('PLAYLIST_SAVED');
 			});
 		};
 
